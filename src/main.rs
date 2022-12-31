@@ -1,19 +1,15 @@
 use clap::Parser;
 use std::{io::Write, net::IpAddr};
 use std::io;
-use public_ip;
 use tokio;
+use public_ip;
+use nat_punching::nat_punch;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
     #[arg(short, long, default_value_t = String::from("Empty"))]
     remote_nat_ip: String,
-}
-
-async fn get_nat_ip() -> Option<IpAddr> {
-    // Attempt to get an IP address and print it.
-    public_ip::addr().await
 }
 
 fn get_remote_nat_ip_from_user() -> IpAddr {
@@ -29,7 +25,7 @@ async fn main() -> io::Result<()>{
     let args = Args::parse();
     let mut unused = String::new();
     
-    let nat_ip = get_nat_ip().await.expect("Failed to get your external IP :(");
+    let nat_ip = public_ip::addr().await.expect("Failed to get your external IP :(");
     println!("Welcome to NAT Punching library!");
     println!("-------------------------------------");
     println!("Your external IP: {:?}", nat_ip);
@@ -48,16 +44,13 @@ async fn main() -> io::Result<()>{
         }
     };
     
-    println!("");
-    println!("Connection information");
-    println!("--------------------------");
-    println!("[{:?} (this machine)] <--> [{:?} (remote machine)]", nat_ip, remote_nat_ip);
-    println!("");
-    
+    let conn = nat_punch::Connection::create(nat_ip, remote_nat_ip);
+    println!("{}", conn);
     println!("press <ENTER> to connect...");
     io::stdin().read_line(&mut unused).expect("Failed to readline");
-
     println!("Trying to punch...");
+    
+    conn.connect().expect("Failed to connect");
 
     Ok(())
 }
