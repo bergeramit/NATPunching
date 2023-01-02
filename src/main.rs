@@ -32,7 +32,7 @@ fn get_cmd_args(args: Args) -> (IpAddr, i32, i32) {
     let remote_nat_ip = match args.remote_nat_ip.as_str() {
         "Empty" => {
             /* Did not pass remote-nat-ip in command line so we ask here to provide it */
-            print!("Enter your remote NAT IP> ");
+            print!("Enter remote NAT IP> ");
             read!(x as IpAddr);
             x
         },
@@ -44,7 +44,7 @@ fn get_cmd_args(args: Args) -> (IpAddr, i32, i32) {
     let remote_nat_port = match args.remote_nat_port {
         0 => {
             /* Did not pass remote-nat-port in command line so we ask here to provide it */
-            print!("Enter your remote NAT PORT> ");
+            print!("Enter remote NAT PORT> ");
             read!(x as i32);
             x
         }
@@ -54,7 +54,7 @@ fn get_cmd_args(args: Args) -> (IpAddr, i32, i32) {
     let local_port = match args.local_port {
         0 => {
             /* Did not pass remote-nat-port in command line so we ask here to provide it */
-            print!("Enter your local PORT> ");
+            print!("Enter local PORT> ");
             read!(x as i32);
             x
         }
@@ -69,16 +69,18 @@ async fn main() -> io::Result<()>{
     let mut unused = String::new();
     
     let local_nat_ip = public_ip::addr().await.expect("Failed to get your external IP :(");
-    println!("Welcome to NAT Punching library!");
-    println!("-------------------------------------");
+    println!("Welcome to NAT Punching library! (local NAT IP: {:?})", local_nat_ip);
+    println!("-------------------------------------------------------------");
+    println!();
     
     let (remote_nat_ip, remote_nat_port, local_port) = get_cmd_args(args);
-    println!("Your local NAT IP: {:?}", local_nat_ip);
-    println!("On your remote machine run: nat_punching --remote-nat-ip {local_nat_ip} --remote-nat-port {local_port} --local-port {remote_nat_port}");
-    println!("");
-    
     let conn = nat_punch::Connection{local_nat_ip, remote_nat_ip, remote_nat_port, local_port};
     println!("{conn}");
+
+    println!("On remote machine run:");
+    println!("nat_punching --remote-nat-ip {local_nat_ip} --remote-nat-port {local_port} --local-port {remote_nat_port}");
+    println!();
+
     println!("press <ENTER> to connect...");
     io::stdin().read_line(&mut unused).expect("Failed to readline");
     println!("Trying to punch...");
