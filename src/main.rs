@@ -3,7 +3,7 @@ use std::{io::Write, net::IpAddr};
 use std::io;
 use tokio;
 use public_ip;
-use nat_punching::nat_punch;
+use nat_punching::nat_punch::{self};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -13,6 +13,9 @@ struct Args {
 
     #[arg(short('p'), long, default_value_t = 0)]
     remote_nat_port: i32,
+
+    #[arg(short('l'), long, default_value_t = 0)]
+    local_port: i32,
 }
 
 #[allow(unused_macros)]
@@ -25,40 +28,7 @@ macro_rules! read {
     };
 }
 
-#[allow(unused_macros)]
-macro_rules! read_str {
-    ($out:ident) => {
-        let mut inner = String::new();
-        std::io::stdin().read_line(&mut inner).expect("A String");
-        let $out = inner.trim();
-    };
-}
-
-#[allow(unused_macros)]
-macro_rules! read_vec {
-    ($out:ident as $type:ty) => {
-        let mut inner = String::new();
-        std::io::stdin().read_line(&mut inner).unwrap();
-        let $out = inner
-            .trim()
-            .split_whitespace()
-            .map(|s| s.parse::<$type>().unwrap())
-            .collect::<Vec<$type>>();
-    };
-}
-
-#[tokio::main]
-async fn main() -> io::Result<()>{
-    let args = Args::parse();
-    let mut unused = String::new();
-    
-    let nat_ip = public_ip::addr().await.expect("Failed to get your external IP :(");
-    println!("Welcome to NAT Punching library!");
-    println!("-------------------------------------");
-    println!("Your external IP: {:?}", nat_ip);
-    println!("On your remote machine run: nat_punching --remote-nat-ip {:?} --remote-nat-port {:?}", nat_ip, 1212);
-    println!("");
-    
+fn get_cmd_args(args: Args) -> (IpAddr, i32, i32) {
     let remote_nat_ip = match args.remote_nat_ip.as_str() {
         "Empty" => {
             /* Did not pass remote-nat-ip in command line so we ask here to provide it */
@@ -71,7 +41,6 @@ async fn main() -> io::Result<()>{
             args.remote_nat_ip.parse::<IpAddr>().expect("Invalid remote NAT IP")
         }
     };
-
     let remote_nat_port = match args.remote_nat_port {
         0 => {
             /* Did not pass remote-nat-port in command line so we ask here to provide it */
@@ -81,9 +50,34 @@ async fn main() -> io::Result<()>{
         }
         _ => { args.remote_nat_port }
     };
+
+    let local_port = match args.local_port {
+        0 => {
+            /* Did not pass remote-nat-port in command line so we ask here to provide it */
+            print!("Enter your local PORT> ");
+            read!(x as i32);
+            x
+        }
+        _ => { args.local_port }
+    };
+    (remote_nat_ip, remote_nat_port, local_port)
+}
+
+#[tokio::main]
+async fn main() -> io::Result<()>{
+    let args = Args::parse();
+    let mut unused = String::new();
     
-    let conn = nat_punch::Connection::create(nat_ip, remote_nat_ip, remote_nat_port);
-    println!("{}", conn);
+    let local_nat_ip = public_ip::addr().await.expect("Failed to get your external IP :(");
+    println!("Welcome to NAT Punching library!");
+    println!("-------------------------------------");
+
+    let (remote_nat_ip, remote_nat_port, local_port) = get_cmd_args(args);
+    println!("On your remote machine run: nat_punching --remote-nat-ip {local_nat_ip} --remote-nat-port {local_port} --local-port {remote_nat_port}");
+    println!("");
+    
+    let conn = nat_punch::Connection{local_nat_ip, remote_nat_ip, remote_nat_port, local_port};
+    println!("{conn}");
     println!("press <ENTER> to connect...");
     io::stdin().read_line(&mut unused).expect("Failed to readline");
     println!("Trying to punch...");
