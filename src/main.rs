@@ -71,8 +71,9 @@ async fn main() -> io::Result<()>{
     let local_nat_ip = public_ip::addr().await.expect("Failed to get your external IP :(");
     println!("Welcome to NAT Punching library!");
     println!("-------------------------------------");
-
+    
     let (remote_nat_ip, remote_nat_port, local_port) = get_cmd_args(args);
+    println!("Your local NAT IP: {:?}", local_nat_ip);
     println!("On your remote machine run: nat_punching --remote-nat-ip {local_nat_ip} --remote-nat-port {local_port} --local-port {remote_nat_port}");
     println!("");
     
