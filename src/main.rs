@@ -1,7 +1,7 @@
 use clap::Parser;
 use std::{io::{self, Write}, net::IpAddr};
 use tokio;
-use nat_punching::nat_punch;
+use nat_punching::nat_punch_endpoint;
 
 #[derive(Parser, Debug)]
 #[command(author="Amit Berger", version, about)]
@@ -68,17 +68,16 @@ async fn main() -> io::Result<()>{
     let mut unused = String::new();
     
     //let local_nat_ip = public_ip::addr().await.expect("Failed to get your external IP :(");
-    let mut endpoint = nat_punch::UdpHoleEndpoint::create().await;
+    let mut endpoint = nat_punch_endpoint::UdpHoleEndpoint::create().await;
     println!("Welcome to NAT Punching library! (local NAT IP: {:?})", endpoint.local_nat_ip);
     println!("-------------------------------------------------------------");
     println!();
     
     let (remote_nat_ip, remote_nat_port, local_port) = get_cmd_args(args);
-    endpoint.remote_nat_ip =  Some(remote_nat_ip);
-    endpoint.remote_nat_port =  remote_nat_port;
-    endpoint.local_port =  local_port;
+    endpoint.set_local_port(local_port);
+    endpoint.set_remote_address(remote_nat_ip, remote_nat_port);
+    
     println!("{endpoint}");
-
     println!("On remote machine run:");
     println!(
         "nat_punching --remote-nat-ip {} --remote-nat-port {} --local-port {}",
@@ -90,9 +89,9 @@ async fn main() -> io::Result<()>{
 
     println!("press <ENTER> to connect...");
     io::stdin().read_line(&mut unused).expect("Failed to readline");
-    println!("Trying to punch...");
     
     endpoint.connect().expect("Failed to connect");
+    // endpoint.set_local_port(123333); // should fail
 
     Ok(())
 }
