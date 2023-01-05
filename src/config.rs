@@ -1,15 +1,20 @@
+use crate::endpoint;
 use clap::Parser;
+use public_ip;
 use std::{io::{self, Write}, net::IpAddr};
 
 #[derive(Parser, Debug)]
 #[command(author="Amit Berger", version, about)]
 /// very simple P2P connection using UDP NAT puching
 pub struct NatPunchingArgs {
-    #[arg(short('i'), long)]
+    #[arg(short('r'), long)]
     remote_nat_ip: Option<IpAddr>,
 
     #[arg(short('p'), long)]
     remote_nat_port: Option<i32>,
+
+    #[arg(short('i'), long)]
+    local_nat_ip: Option<IpAddr>,
 
     #[arg(short('l'), long)]
     local_port: Option<i32>,
@@ -25,8 +30,14 @@ macro_rules! read {
     };
 }
 
-pub fn parse_with_input_fill() -> (IpAddr, i32, i32) {
+pub async fn build_endpoint_from_config() -> endpoint::UdpHoleEndpoint {
     let args = NatPunchingArgs::parse();
+    let local_nat_ip = match args.local_nat_ip {
+        None => {
+            public_ip::addr().await.expect("Failed to get your external IP :(")
+        }
+        Some(x) => x
+    };
     let remote_nat_ip = args.remote_nat_ip.unwrap_or_else(|| -> IpAddr {
         /* Did not pass remote-nat-ip in command line so we ask here to provide it */
         print!("Enter remote NAT IP> ");
@@ -46,5 +57,5 @@ pub fn parse_with_input_fill() -> (IpAddr, i32, i32) {
         x
     });
     
-    (remote_nat_ip, remote_nat_port, local_port)
+    endpoint::UdpHoleEndpoint::new(remote_nat_ip, remote_nat_port, local_nat_ip, local_port)
 }

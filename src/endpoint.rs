@@ -1,6 +1,7 @@
 use std::net;
 use std::fmt;
 use std::io;
+use std::net::IpAddr;
 
 #[allow(unused_macros)]
 macro_rules! validate_lock {
@@ -12,19 +13,19 @@ macro_rules! validate_lock {
 }
 
 pub struct UdpHoleEndpoint {
-    pub local_nat_ip: net::IpAddr,
     pub remote_nat_ip: net::IpAddr,
     pub remote_nat_port: i32,
+    pub local_nat_ip: net::IpAddr,
     pub local_port: i32,
     lock_connection: bool
 }
 
 impl UdpHoleEndpoint {
-    pub fn new(local_nat_ip: net::IpAddr, remote_nat_ip: net::IpAddr, remote_nat_port: i32, local_port: i32) -> Self {
+    pub fn new(remote_nat_ip: net::IpAddr, remote_nat_port: i32, local_nat_ip: IpAddr, local_port: i32) -> Self {
         Self{
-            local_nat_ip,
             remote_nat_ip,
             remote_nat_port,
+            local_nat_ip,
             local_port,
             lock_connection: false
         }
