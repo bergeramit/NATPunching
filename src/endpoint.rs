@@ -1,7 +1,7 @@
 use std::net;
 use std::fmt;
 use std::io;
-use std::net::IpAddr;
+use std::net::{IpAddr, ToSocketAddrs, UdpSocket};
 
 #[allow(unused_macros)]
 macro_rules! validate_lock {
@@ -14,14 +14,14 @@ macro_rules! validate_lock {
 
 pub struct UdpHoleEndpoint {
     pub remote_nat_ip: net::IpAddr,
-    pub remote_nat_port: i32,
+    pub remote_nat_port: u16,
     pub local_nat_ip: net::IpAddr,
-    pub local_port: i32,
+    pub local_port: u16,
     lock_connection: bool
 }
 
 impl UdpHoleEndpoint {
-    pub fn new(remote_nat_ip: net::IpAddr, remote_nat_port: i32, local_nat_ip: IpAddr, local_port: i32) -> Self {
+    pub fn new(remote_nat_ip: net::IpAddr, remote_nat_port: u16, local_nat_ip: IpAddr, local_port: u16) -> Self {
         Self{
             remote_nat_ip,
             remote_nat_port,
@@ -32,7 +32,16 @@ impl UdpHoleEndpoint {
     }
 
     pub fn connect(&mut self) -> io::Result<()> {
+        validate_lock!(self);
+        let mut recv_buf = [0; 10];
+        let mut send_buf = [0; 10];
+
+        let send_socket = UdpSocket::bind((self.remote_nat_ip, self.remote_nat_port))?;
+        let recv_socket = UdpSocket::bind((self.local_nat_ip, self.local_port))?;
         self.lock_connection = true;
+
+        
+
         println!("Trying to punch...");
         /* Start udp hole punching */
         println!("Connected!");

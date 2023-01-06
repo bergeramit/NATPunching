@@ -11,13 +11,13 @@ pub struct NatPunchingArgs {
     remote_nat_ip: Option<IpAddr>,
 
     #[arg(short('p'), long)]
-    remote_nat_port: Option<i32>,
+    remote_nat_port: Option<u16>,
 
     #[arg(short('i'), long)]
     local_nat_ip: Option<IpAddr>,
 
     #[arg(short('l'), long)]
-    local_port: Option<i32>,
+    local_port: Option<u16>,
 }
 
 #[allow(unused_macros)]
@@ -44,16 +44,16 @@ pub async fn build_endpoint_from_config() -> endpoint::UdpHoleEndpoint {
         read!(x as IpAddr);
         x
     });
-    let remote_nat_port = args.remote_nat_port.unwrap_or_else(|| -> i32 {
+    let remote_nat_port = args.remote_nat_port.unwrap_or_else(|| -> u16 {
         /* Did not pass remote-nat-port in command line so we ask here to provide it */
         print!("Enter remote NAT PORT> ");
-        read!(x as i32);
+        read!(x as u16);
         x
     });
-    let local_port = args.local_port.unwrap_or_else(|| -> i32 {
+    let local_port = args.local_port.unwrap_or_else(|| -> u16 {
         /* Did not pass local-nat-port in command line so we ask here to provide it */
         print!("Enter local PORT> ");
-        read!(x as i32);
+        read!(x as u16);
         x
     });
     
