@@ -1,10 +1,11 @@
 use std::net;
 use std::fmt;
 use std::io;
-use std::net::{IpAddr, ToSocketAddrs, UdpSocket};
+use std::{thread, time};
+use std::net::{IpAddr, UdpSocket, Ipv4Addr};
 
 #[allow(unused_macros)]
-macro_rules! validate_lock {
+macro_rules! validate_disconnect {
     ($out:ident) => {
         if $out.lock_connection {
             panic!("Cannot change connection while connected!");
@@ -32,26 +33,46 @@ impl UdpHoleEndpoint {
     }
 
     pub fn connect(&mut self) -> io::Result<()> {
-        validate_lock!(self);
-        let mut recv_buf = [0; 10];
-        let mut send_buf = [0; 10];
+        validate_disconnect!(self);
 
-        let send_socket = UdpSocket::bind((self.remote_nat_ip, self.remote_nat_port))?;
-        let recv_socket = UdpSocket::bind((self.local_nat_ip, self.local_port))?;
+        let mut ka_recv_buf = [12,12,12,12,12];
+        let ka_buffer = [4,4,4,4];
+
+        let socket = UdpSocket::bind((Ipv4Addr::UNSPECIFIED, self.local_port))?;
+        socket.set_nonblocking(true).unwrap();
         self.lock_connection = true;
 
-        
-
         println!("Trying to punch...");
-        /* Start udp hole punching */
-        println!("Connected!");
+        loop {
+            match socket.send_to(&ka_buffer, (self.remote_nat_ip, self.remote_nat_port)) {
+                Ok(_) => {},
+                Err(e) => {
+                    println!("Still did not go through ({:?})", e);
+                }
+            };
+            match socket.recv_from(&mut ka_recv_buf) {
+                    Ok((size, src)) => {
+                        println!("Got message from: {:?}", src);
+                        println!("Message size: {:?}", size);
+                        println!("Message: {:?}", ka_recv_buf);
+                    },
+                    Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => { /* we want to wait for the hole to be created */}
+                    Err(e) => {
+                        println!("Error occurred: {:?}", e);
+                        break
+                    },
+                };
+            println!("Sleeping for 100ms...");
+            thread::sleep(time::Duration::from_millis(100));
+        };
+
+        self.disconnect();
         Ok(())
     }
 
-    pub fn disconnect(&mut self) -> io::Result<()> {
+    pub fn disconnect(&mut self) {
         self.lock_connection = false;
         println!("Disconnected!");
-        Ok(())
     }
 
 }

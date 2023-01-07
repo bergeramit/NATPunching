@@ -21,7 +21,7 @@ async fn main() -> io::Result<()>{
     wait_for_enter();
     
     endpoint.connect().expect("Failed to connect");
-    endpoint.disconnect().expect("Failed to disconnect");
+    endpoint.disconnect();
 
     Ok(())
 }
