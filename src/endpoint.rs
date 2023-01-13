@@ -23,7 +23,7 @@ pub struct UdpHoleEndpoint {
 
 impl UdpHoleEndpoint {
     pub fn new(remote_nat_ip: net::IpAddr, remote_nat_port: u16, local_nat_ip: IpAddr, local_port: u16) -> Self {
-        Self{
+        Self {
             remote_nat_ip,
             remote_nat_port,
             local_nat_ip,
@@ -37,6 +37,7 @@ impl UdpHoleEndpoint {
 
         let mut ka_recv_buf = [12,12,12,12,12];
         let ka_buffer = [4,4,4,4];
+        let sleep_timer = 100;
 
         let socket = UdpSocket::bind((Ipv4Addr::UNSPECIFIED, self.local_port))?;
         socket.set_nonblocking(true).unwrap();
@@ -62,8 +63,8 @@ impl UdpHoleEndpoint {
                         break
                     },
                 };
-            println!("Sleeping for 100ms...");
-            thread::sleep(time::Duration::from_millis(100));
+            println!("Sleeping for {sleep_timer}ms...");
+            thread::sleep(time::Duration::from_millis(sleep_timer));
         };
 
         self.disconnect();
