@@ -41,10 +41,10 @@ macro_rules! read {
 }
 
 pub async fn build_endpoint_from_connect_command(
-    local_nat_ip: Option<Ipv4Addr>,
-    local_port: Option<u16>,
     remote_nat_ip: Option<Ipv4Addr>,
-    remote_nat_port: Option<u16>) -> endpoint::UdpHoleEndpoint {
+    remote_nat_port: Option<u16>,
+    local_nat_ip: Option<Ipv4Addr>,
+    local_port: Option<u16>) -> endpoint::UdpHoleEndpoint {
     let local_nat_ip = match local_nat_ip {
         None => {
             public_ip::addr_v4().await.expect("Failed to get your external IP :(")
