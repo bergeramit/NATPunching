@@ -2,7 +2,7 @@ use std::net;
 use std::fmt;
 use std::io;
 use std::{thread, time};
-use std::net::{IpAddr, UdpSocket, Ipv4Addr};
+use std::net::{UdpSocket, Ipv4Addr};
 
 #[allow(unused_macros)]
 macro_rules! validate_disconnect {
@@ -14,15 +14,15 @@ macro_rules! validate_disconnect {
 }
 
 pub struct UdpHoleEndpoint {
-    pub remote_nat_ip: net::IpAddr,
+    pub remote_nat_ip: net::Ipv4Addr,
     pub remote_nat_port: u16,
-    pub local_nat_ip: net::IpAddr,
+    pub local_nat_ip: net::Ipv4Addr,
     pub local_port: u16,
     lock_connection: bool
 }
 
 impl UdpHoleEndpoint {
-    pub fn new(remote_nat_ip: net::IpAddr, remote_nat_port: u16, local_nat_ip: IpAddr, local_port: u16) -> Self {
+    pub fn new(remote_nat_ip: net::Ipv4Addr, remote_nat_port: u16, local_nat_ip: Ipv4Addr, local_port: u16) -> Self {
         Self {
             remote_nat_ip,
             remote_nat_port,
@@ -94,10 +94,11 @@ impl fmt::Display for UdpHoleEndpoint {
         writeln!(f,"").unwrap();
         writeln!(
             f,
-            "On remote machine run: nat_punching --remote-nat-ip {} --remote-nat-port {} --local-port {}",
+            "On remote machine run: nat_punching connect --remote-nat-ip {} --remote-nat-port {} --local-port {} --local-nat-ip {}",
             self.local_nat_ip,
             self.local_port,
-            self.remote_nat_port
+            self.remote_nat_port,
+            self.remote_nat_ip
         )
     }
 }
