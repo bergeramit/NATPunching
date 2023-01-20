@@ -9,3 +9,4 @@ edition = "2021"
 clap = { version = "4.0.32", features = ["derive"] }
 public-ip = "0.2.2"
 tokio = { version = "1.23.0", features = ["full"] }
+futures = "0.3.25"

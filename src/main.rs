@@ -2,7 +2,7 @@ mod config;
 mod endpoint;
 
 use std::io;
-use tokio;
+use tokio::runtime::Runtime;
 use clap::Parser;
 use config::{Action, Args};
 
@@ -12,8 +12,7 @@ fn wait_for_enter() {
     io::stdin().read_line(&mut unused).expect("Failed to readline");
 }
 
-#[tokio::main]
-async fn main() -> io::Result<()>{
+fn main(){
 
     println!("Welcome to NAT Punching library!");
     println!("--------------------------------");
@@ -21,9 +20,9 @@ async fn main() -> io::Result<()>{
     let args = Args::parse();
     let mut endpoint = match args.action {
         Action::DisplayNatIP => {
-            let local_nat_ip = public_ip::addr_v4().await.expect("Failed to get your external IP :(");
+            let local_nat_ip = Runtime::new().unwrap().block_on(public_ip::addr_v4()).expect("Failed to get your external IP :(");
             println!("local nat ip: {:?}", local_nat_ip);
-            return Ok(())
+            return
         },
         Action::Connect {
             remote_nat_ip,
@@ -34,7 +33,7 @@ async fn main() -> io::Result<()>{
                     remote_nat_ip,
                     remote_nat_port,
                     local_nat_ip,
-                    local_port).await
+                    local_port)
         }
     };
     
@@ -43,6 +42,4 @@ async fn main() -> io::Result<()>{
     
     endpoint.connect().expect("Failed to connect");
     endpoint.disconnect();
-
-    Ok(())
 }

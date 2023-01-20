@@ -525,6 +525,7 @@ name = "nat_punching"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "futures",
  "public-ip",
  "tokio",
 ]

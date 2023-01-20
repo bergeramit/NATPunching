@@ -2,6 +2,7 @@ use crate::endpoint;
 use clap::Parser;
 use public_ip;
 use std::{io::{self, Write}, net::Ipv4Addr};
+use tokio::runtime::Runtime;
 
 #[derive(Parser)]
 #[command(author="Amit Berger", version, about)]
@@ -40,14 +41,14 @@ macro_rules! read {
     };
 }
 
-pub async fn build_endpoint_from_connect_command(
+pub fn build_endpoint_from_connect_command(
     remote_nat_ip: Option<Ipv4Addr>,
     remote_nat_port: Option<u16>,
     local_nat_ip: Option<Ipv4Addr>,
     local_port: Option<u16>) -> endpoint::UdpHoleEndpoint {
     let local_nat_ip = match local_nat_ip {
         None => {
-            public_ip::addr_v4().await.expect("Failed to get your external IP :(")
+            Runtime::new().unwrap().block_on(public_ip::addr_v4()).expect("Failed to get your external IP :(")
         }
         Some(x) => x
     };
